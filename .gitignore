@@ -125,6 +125,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -178,3 +180,11 @@ pyrightconfig.json
 # uv 
 
 .python-version
+
+# Local AI agent workspace and generated agent metadata
+.ai-agents/
+.claude/
+.omo/
+.gitnexus/
+AGENTS.md
+CLAUDE.md

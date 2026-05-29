@@ -1,0 +1,54 @@
+services:
+  api-gateway:
+    volumes:
+      - ./backend/services/api-gateway/app:/app/services/api-gateway/app:ro,Z
+      - ./backend/packages/shared/src:/app/packages/shared/src:ro,Z
+    command:
+      [
+        "uv",
+        "run",
+        "--no-dev",
+        "--package",
+        "identity-service",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+  identity-service:
+    volumes:
+      - ./backend/services/identity-service/app:/app/services/identity-service/app:ro,Z
+      - ./backend/services/identity-service/alembic:/app/services/identity-service/alembic:ro,Z
+      - ./backend/packages/shared/src:/app/packages/shared/src:ro,Z
+    command:
+      [
+        "uv",
+        "run",
+        "--no-dev",
+        "--package",
+        "api-gateway",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+
+  mauria-mock:
+    volumes:
+      - ./backend/services/mauria-mock/app.py:/app/app.py:ro,Z
+    command:
+      [
+        "uvicorn",
+        "app:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
