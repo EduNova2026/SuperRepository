@@ -1,7 +1,8 @@
+name: edunova
 services:
   postgres:
     image: bitnamilegacy/postgresql:16
-    container_name: edunova-postgres
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRESQL_REPLICATION_MODE: master
@@ -24,7 +25,7 @@ services:
 
   postgres-replica:
     image: bitnamilegacy/postgresql:16
-    container_name: edunova-postgres-replica
+    container_name: postgres-replica
     restart: unless-stopped
     environment:
       POSTGRESQL_REPLICATION_MODE: slave
@@ -50,7 +51,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: edunova-redis
+    container_name: redis
     restart: unless-stopped
     volumes:
       - redis_data:/data
@@ -66,7 +67,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/api-gateway/Dockerfile
-    container_name: saas-api-gateway
+    container_name: api-gateway
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -96,7 +97,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/identity-service/Dockerfile
-    container_name: saas-identity-service
+    container_name: identity-service
     restart: unless-stopped
     environment:
       APP_NAME: ${IDENTITY_APP_NAME:-identity-service}
@@ -135,7 +136,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/mauria-mock/Dockerfile
-    container_name: saas-mauria-mock
+    container_name: mauria-mock
     restart: unless-stopped
     environment:
       MAURIA_API_URL: ${MAURIA_API_URL:-https://mauria-api.fly.dev}
