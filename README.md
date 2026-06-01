@@ -22,6 +22,19 @@ Required variables:
 
 ## Quick Start
 
+Clone the repository with its backend submodule:
+
+```bash
+git clone --recurse-submodules git@github.com:EduNova2026/SuperRepository.git
+cd SuperRepository
+```
+
+If you already cloned the repository without submodules, initialize them before starting Docker:
+
+```bash
+git submodule update --init --recursive
+```
+
 Start the full infrastructure with Doppler:
 
 ```bash
