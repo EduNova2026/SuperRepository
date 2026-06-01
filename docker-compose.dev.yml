@@ -72,13 +72,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      APP_NAME: ${APP_NAME:-api-gateway}
       APP_ENV: ${APP_ENV:-development}
-      APP_VERSION: ${APP_VERSION:-0.1.0}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      API_PREFIX: ${API_PREFIX:-/api/v1}
-      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8000}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8000}
+      SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
     networks:
       - saas-network
     healthcheck:
@@ -100,14 +98,12 @@ services:
     container_name: identity-service
     restart: unless-stopped
     environment:
-      APP_NAME: ${IDENTITY_APP_NAME:-identity-service}
       APP_ENV: ${APP_ENV:-development}
-      APP_VERSION: ${APP_VERSION:-0.1.0}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
       DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
       REDIS_URL: redis://redis:6379/0
-      MAURIA_MOCK_URL: http://mauria-mock:8000
+      MAURIA_MOCK_URL: ${MAURIA_MOCK_URL:-http://mauria-mock:8000}
       MAURIA_LOGIN_PATH: ${MAURIA_LOGIN_PATH:-/aurion/login}
       ALLOW_STUDENT_BYPASS: ${ALLOW_STUDENT_BYPASS:-false}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -132,6 +128,38 @@ services:
       timeout: 5s
       retries: 5
 
+  scolarite-service:
+    build:
+      context: ./backend
+      dockerfile: services/scolarite-service/Dockerfile
+    container_name: scolarite-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
+      DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mauria-mock:
     build:
       context: ./backend
@@ -140,7 +168,7 @@ services:
     restart: unless-stopped
     environment:
       MAURIA_API_URL: ${MAURIA_API_URL:-https://mauria-api.fly.dev}
-      ALLOW_STUDENT_BYPASS: "true"
+      ALLOW_STUDENT_BYPASS: ${ALLOW_STUDENT_BYPASS:-false}
     networks:
       - saas-network
     healthcheck:
