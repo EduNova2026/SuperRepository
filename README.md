@@ -1,6 +1,21 @@
 # EDU'NOVA
 
-SaaS super-repository. The first backend brick is a FastAPI API Gateway managed with UV, Docker Compose, and Doppler.
+SaaS super-repository. The backend workspace lives in `backend/` and is split into:
+
+- `services/api-gateway`: public FastAPI entry point
+- `services/identity-service`: authentication and user identity
+- `services/mauria-mock`: local Mauria stand-in for development
+- `packages/shared`: shared schemas and contracts
+
+## Backend auth flow
+
+- The frontend only talks to the API Gateway.
+- `POST /api/v1/auth/login` is received by the Gateway and proxied to the Identity Service.
+- The Identity Service delegates credential verification to Mauria (or the Mauria mock when the student bypass is enabled).
+- On first login, users are created from the email local-part: `prenom`/`nom` are parsed from the address, `actif` starts as `true`, and `premier_login` starts as `true`.
+- After the first successful login, `premier_login` is set to `false`.
+- If `actif=false`, login is rejected even after valid Mauria credentials with: `Votre compte est désactivé veuillez contacter un administrateur`.
+- The backend does not store Mauria passwords; `mdp` is a nullable legacy column cleared by migration.
 
 ## Secrets & Environment Variables
 
@@ -19,6 +34,10 @@ Required variables:
 - `ALLOW_STUDENT_BYPASS`
 
 > **Note** : `ALLOW_STUDENT_BYPASS=true` permet de tester le login avec des emails `@student.junia.com` sans appeler l'API Mauria. À n'activer qu'en développement.
+
+## Deployment note
+
+The identity-service container runs Alembic migrations on startup (`uv run --no-dev alembic -c alembic/alembic.ini upgrade head`), so include database migrations in deployment.
 
 ## Quick Start
 
