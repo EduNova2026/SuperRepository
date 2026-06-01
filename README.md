@@ -34,14 +34,18 @@ Stop it when needed:
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-The API Gateway listens on `http://localhost:8000`.
+The API Gateway is the only backend service exposed to the host and listens on `http://localhost:8000`.
+The frontend must never call backend microservices directly.
 
-The Mauria mock listens on `http://localhost:8002` and accepts any `@junia.com` or `@ext.junia.com` email with a non-empty password.
+The Identity Service and Mauria mock are internal Docker services only. They are reachable by other containers through Docker DNS (`http://identity-service:8000` and `http://mauria-mock:8000`) but are not published on localhost.
 
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/health/detailed
 curl http://localhost:8000/api/v1/gateway/status
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@junia.com","password":"test"}'
 ```
 
 ## Local development
