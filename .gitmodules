@@ -1,0 +1,4 @@
+[submodule "backend"]
+	path = backend
+	url = git@github.com:EduNova2026/BACKEND.git
+	branch = develop

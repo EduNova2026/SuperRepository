@@ -1,0 +1,29 @@
+# Zero-trust Docker context: ignore everything by default.
+*
+
+# Keep only files needed when a build uses the repository root as context.
+!backend/
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/packages/
+!backend/packages/shared/
+!backend/packages/shared/pyproject.toml
+!backend/packages/shared/src/
+!backend/packages/shared/src/**
+!backend/services/
+!backend/services/api-gateway/
+!backend/services/api-gateway/Dockerfile
+!backend/services/api-gateway/pyproject.toml
+!backend/services/api-gateway/app/
+!backend/services/api-gateway/app/**
+!backend/services/identity-service/
+!backend/services/identity-service/Dockerfile
+!backend/services/identity-service/pyproject.toml
+!backend/services/identity-service/app/
+!backend/services/identity-service/app/**
+!backend/services/identity-service/alembic/
+!backend/services/identity-service/alembic/**
+
+!backend/services/mauria-mock/
+!backend/services/mauria-mock/Dockerfile
+!backend/services/mauria-mock/app.py

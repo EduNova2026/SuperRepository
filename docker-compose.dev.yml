@@ -1,0 +1,193 @@
+name: edunova
+services:
+  postgres:
+    image: bitnamilegacy/postgresql:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:?POSTGRES_REPLICATION_USER is required}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:?POSTGRES_REPLICATION_PASSWORD is required}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB:-edunova}
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME} -d $${POSTGRESQL_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  postgres-replica:
+    image: bitnamilegacy/postgresql:16
+    container_name: postgres-replica
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_MASTER_HOST: postgres
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:?POSTGRES_REPLICATION_USER is required}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:?POSTGRES_REPLICATION_PASSWORD is required}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB:-edunova}
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME} -d $${POSTGRESQL_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8000}
+      SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  identity-service:
+    build:
+      context: ./backend
+      dockerfile: services/identity-service/Dockerfile
+    container_name: identity-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
+      DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
+      REDIS_URL: redis://redis:6379/0
+      MAURIA_MOCK_URL: ${MAURIA_MOCK_URL:-http://mauria-mock:8000}
+      MAURIA_LOGIN_PATH: ${MAURIA_LOGIN_PATH:-/aurion/login}
+      ALLOW_STUDENT_BYPASS: ${ALLOW_STUDENT_BYPASS:-false}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scolarite-service:
+    build:
+      context: ./backend
+      dockerfile: services/scolarite-service/Dockerfile
+    container_name: scolarite-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
+      DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mauria-mock:
+    build:
+      context: ./backend
+      dockerfile: services/mauria-mock/Dockerfile
+    container_name: mauria-mock
+    restart: unless-stopped
+    environment:
+      MAURIA_API_URL: ${MAURIA_API_URL:-https://mauria-api.fly.dev}
+      ALLOW_STUDENT_BYPASS: ${ALLOW_STUDENT_BYPASS:-false}
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  postgres_replica_data:
+  redis_data:
+
+networks:
+  saas-network:
+    driver: bridge
