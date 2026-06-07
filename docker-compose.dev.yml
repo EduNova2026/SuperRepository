@@ -160,6 +160,39 @@ services:
       timeout: 5s
       retries: 5
 
+  import-service:
+    build:
+      context: ./backend
+      dockerfile: services/import-service/Dockerfile
+    container_name: import-service
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
+      DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+    networks:
+      - saas-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mauria-mock:
     build:
       context: ./backend
