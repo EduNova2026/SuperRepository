@@ -5,3 +5,4 @@
 [submodule "frontend"]
 	path = frontend
 	url = git@github.com:EduNova2026/saas-frontend.git
+	branch = develop-mac
