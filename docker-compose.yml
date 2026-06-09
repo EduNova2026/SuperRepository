@@ -171,10 +171,13 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-edunova}
       DATABASE_REPLICA_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres-replica:5432/${POSTGRES_DB:-edunova}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
     depends_on:
       postgres:
         condition: service_healthy
       postgres-replica:
+        condition: service_healthy
+      scolarite-service:
         condition: service_healthy
     networks:
       - saas-network
