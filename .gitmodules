@@ -1,8 +1,8 @@
 [submodule "backend"]
 	path = backend
 	url = git@github.com:EduNova2026/BACKEND.git
-	branch = develop
+	branch = main
 [submodule "frontend"]
 	path = frontend
 	url = git@github.com:EduNova2026/saas-frontend.git
-	branch = develop-mac
+	branch = main
