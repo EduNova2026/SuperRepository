@@ -66,16 +66,17 @@ services:
       dockerfile: services/api-gateway/Dockerfile
     container_name: saas-api-gateway
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       APP_ENV: ${APP_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-https://edunova.midmac.fr}
       IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8000}
       SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
       IMPORT_SERVICE_URL: ${IMPORT_SERVICE_URL:-http://import-service:8000}
     networks:
+      - gateway-network
       - saas-network
     healthcheck:
       test:
@@ -257,7 +258,7 @@ services:
         condition: service_healthy
     networks:
       - frontend-network
-      - saas-network
+      - gateway-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 10s
@@ -271,6 +272,8 @@ volumes:
 
 networks:
   saas-network:
+    driver: bridge
+  gateway-network:
     driver: bridge
   frontend-network:
     driver: bridge
