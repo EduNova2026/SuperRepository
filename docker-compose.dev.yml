@@ -42,6 +42,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
+      - gateway-network
       - saas-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME} -d $${POSTGRESQL_DATABASE}"]
@@ -79,6 +80,7 @@ services:
       SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
       IMPORT_SERVICE_URL: ${IMPORT_SERVICE_URL:-http://import-service:8000}
     networks:
+      - gateway-network
       - saas-network
     healthcheck:
       test:
@@ -263,7 +265,7 @@ services:
         condition: service_healthy
     networks:
       - frontend-network
-      - saas-network
+      - gateway-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 10s
@@ -277,6 +279,8 @@ volumes:
 
 networks:
   saas-network:
+    driver: bridge
+  gateway-network:
     driver: bridge
   frontend-network:
     driver: bridge
