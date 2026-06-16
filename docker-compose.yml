@@ -1,7 +1,9 @@
+name: edunova
+
 services:
   postgres:
     image: bitnamilegacy/postgresql:16
-    container_name: edunova-postgres
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRESQL_REPLICATION_MODE: master
@@ -22,7 +24,7 @@ services:
 
   postgres-replica:
     image: bitnamilegacy/postgresql:16
-    container_name: edunova-postgres-replica
+    container_name: postgres-replica
     restart: unless-stopped
     environment:
       POSTGRESQL_REPLICATION_MODE: slave
@@ -64,7 +66,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/api-gateway/Dockerfile
-    container_name: saas-api-gateway
+    container_name: api-gateway
     restart: unless-stopped
     expose:
       - "8000"
@@ -94,7 +96,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/identity-service/Dockerfile
-    container_name: saas-identity-service
+    container_name: identity-service
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV:-development}
@@ -131,7 +133,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/scolarite-service/Dockerfile
-    container_name: saas-scolarite-service
+    container_name: scolarite-service
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV:-development}
@@ -167,7 +169,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/import-service/Dockerfile
-    container_name: saas-import-service
+    container_name: import-service
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV:-development}
@@ -203,7 +205,7 @@ services:
     build:
       context: ./backend
       dockerfile: services/mauria-mock/Dockerfile
-    container_name: saas-mauria-mock
+    container_name: mauria-mock
     restart: unless-stopped
     environment:
       MAURIA_API_URL: ${MAURIA_API_URL:-https://mauria-api.fly.dev}
@@ -228,7 +230,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         EDUNOVA_API_URL: ${EDUNOVA_API_URL:-http://nginx:80}
-    container_name: saas-frontend
+    container_name: frontend
     restart: unless-stopped
     environment:
       EDUNOVA_API_URL: http://nginx:80
@@ -244,13 +246,14 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: saas-nginx
+    container_name: nginx
     restart: unless-stopped
     environment:
       FRONTEND_URL: frontend:3000
       API_GATEWAY_URL: api-gateway:8000
+      NGINX_HOST_PORT: ${NGINX_HOST_PORT:-8080}
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:${NGINX_HOST_PORT:-8080}:80"
     depends_on:
       frontend:
         condition: service_healthy
