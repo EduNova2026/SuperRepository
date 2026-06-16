@@ -27,3 +27,37 @@
 !backend/services/mauria-mock/
 !backend/services/mauria-mock/Dockerfile
 !backend/services/mauria-mock/app.py
+
+# Frontend
+!frontend/
+!frontend/Dockerfile.dev
+!frontend/Dockerfile.prod
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/tsconfig.json
+!frontend/next.config.ts
+!frontend/postcss.config.mjs
+!frontend/eslint.config.mjs
+!frontend/components.json
+!frontend/app/
+!frontend/app/**
+!frontend/components/
+!frontend/components/**
+!frontend/lib/
+!frontend/lib/**
+!frontend/hooks/
+!frontend/hooks/**
+!frontend/types/
+!frontend/types/**
+!frontend/data/
+!frontend/data/**
+!frontend/public/
+!frontend/public/**
+
+# NGINX
+!nginx/
+!nginx/Dockerfile
+!nginx/Dockerfile.dev
+!nginx/conf/
+!nginx/conf/default.conf.template
+!nginx/conf/default.dev.conf.template

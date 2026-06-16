@@ -1,0 +1,26 @@
+name: Build - Staging
+
+on:
+  push:
+    branches: [staging]
+  pull_request:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build all images
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_REPLICATION_USER: ci
+          POSTGRES_REPLICATION_PASSWORD: ci
+          JWT_SECRET: ci
+        run: docker compose -f docker-compose.yml build

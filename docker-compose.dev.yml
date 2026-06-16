@@ -42,6 +42,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
+      - gateway-network
       - saas-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME} -d $${POSTGRESQL_DATABASE}"]
@@ -79,6 +80,7 @@ services:
       SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
       IMPORT_SERVICE_URL: ${IMPORT_SERVICE_URL:-http://import-service:8000}
     networks:
+      - gateway-network
       - saas-network
     healthcheck:
       test:
@@ -224,6 +226,52 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend
+    restart: unless-stopped
+    environment:
+      EDUNOVA_API_URL: http://nginx:80
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - frontend-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5173"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    container_name: nginx
+    restart: unless-stopped
+    environment:
+      FRONTEND_URL: frontend:5173
+      API_GATEWAY_URL: api-gateway:8000
+    ports:
+      - "80:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - frontend-network
+      - gateway-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
   postgres_replica_data:
@@ -231,4 +279,8 @@ volumes:
 
 networks:
   saas-network:
+    driver: bridge
+  gateway-network:
+    driver: bridge
+  frontend-network:
     driver: bridge
