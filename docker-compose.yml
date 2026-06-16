@@ -221,6 +221,49 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        EDUNOVA_API_URL: ${EDUNOVA_API_URL:-http://nginx:80}
+    container_name: saas-frontend
+    restart: unless-stopped
+    environment:
+      EDUNOVA_API_URL: http://nginx:80
+    networks:
+      - frontend-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: saas-nginx
+    restart: unless-stopped
+    environment:
+      FRONTEND_URL: frontend:3000
+      API_GATEWAY_URL: api-gateway:8000
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - frontend-network
+      - saas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
   postgres_replica_data:
@@ -228,4 +271,6 @@ volumes:
 
 networks:
   saas-network:
+    driver: bridge
+  frontend-network:
     driver: bridge
