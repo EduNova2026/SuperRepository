@@ -17,4 +17,10 @@ jobs:
           submodules: recursive
 
       - name: Build all images
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_REPLICATION_USER: ci
+          POSTGRES_REPLICATION_PASSWORD: ci
+          JWT_SECRET: ci
         run: docker compose -f docker-compose.yml build
