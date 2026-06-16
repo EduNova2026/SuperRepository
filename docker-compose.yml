@@ -39,7 +39,6 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - gateway-network
       - saas-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRESQL_USERNAME} -d $${POSTGRESQL_DATABASE}"]
@@ -72,7 +71,7 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-https://edunova.midmac.fr}
       IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8000}
       SCOLARITE_SERVICE_URL: ${SCOLARITE_SERVICE_URL:-http://scolarite-service:8000}
       IMPORT_SERVICE_URL: ${IMPORT_SERVICE_URL:-http://import-service:8000}
