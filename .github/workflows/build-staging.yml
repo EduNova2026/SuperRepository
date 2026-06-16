@@ -11,11 +11,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout with private submodules
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          ssh-key: ${{ secrets.SSH_DEPLOY_KEY }}
 
       - name: Build all images
         run: docker compose -f docker-compose.yml build
