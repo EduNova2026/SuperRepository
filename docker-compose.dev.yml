@@ -235,7 +235,7 @@ services:
     environment:
       EDUNOVA_API_URL: http://nginx:80
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:z
       - /app/node_modules
       - /app/.next
     networks:
